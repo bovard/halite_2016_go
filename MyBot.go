@@ -22,19 +22,53 @@ func findCountToFront(myID int, gameMap hlt.GameMap, loc hlt.Location, d hlt.Dir
 }
 
 
+func canNeighborCaptureWithOurHelp(myID int, gameMap hlt.GameMap, loc hlt.Location, d hlt.Direction) float64 {
+	var ourSite = gameMap.GetSite(loc, hlt.STILL)
+	var theirLocation = gameMap.GetLocation(loc, d)
+	var theirSite = gameMap.GetSite(theirLocation, hlt.STILL)
+	var value = 10000.0
+	if theirSite.Owner != myID {
+		return value
+	}
+	for _,d := range hlt.CARDINALS {
+		var l = gameMap.GetLocation(theirLocation, d)
+		var s = gameMap.GetSite(l, hlt.STILL)
+		if s.Owner != myID {
+			if ourSite.Strength + theirSite.Strength + theirSite.Production > s.Strength && theirSite.Strength + theirSite.Production < s.Strength {
+				var v = float64(s.Strength) / float64(s.Production)
+				if v < value {
+					value = v
+				}
+			}
+		}
+	}
+	return value
+}
+
+
 func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 	var site = gameMap.GetSite(loc, hlt.STILL)
 	var allies = 0
+	var value = 999.0
+	var dir = hlt.STILL
 	for _,d := range hlt.CARDINALS {
 		var new_site = gameMap.GetSite(loc, d)
 		if new_site.Owner != myID && new_site.Strength < site.Strength {
-			return hlt.Move {
-				Location: loc,
-				Direction: d,
+			var v = float64(new_site.Strength) / float64(new_site.Production)
+			if v < value {
+				value = v
+				dir = d
 			}
 		}
 		if new_site.Owner == myID {
 			allies += 1
+		}
+	}
+
+	if (dir != hlt.STILL) {
+		return hlt.Move {
+			Location: loc,
+			Direction: dir,
 		}
 	}
 
@@ -45,36 +79,39 @@ func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 		}
 	}
 
+	// see if we can help any of our allies capture
+	if allies != 4 && (loc.X + loc.Y) % 2 != 0 {
+		var best = 9999.0 
+		var dir = hlt.STILL
+		for _,d := range hlt.CARDINALS {
+			var value = canNeighborCaptureWithOurHelp(myID, gameMap, loc, d)
+			if value < best {
+				best = value
+				dir = d
+			}
+		}
+		if best < 999.0 {
+			return hlt.Move {
+				Location: loc,
+				Direction: dir,
+			}
+		}
+	}
+
+	// if we are surrounded by allies, move toward the nearest front
 	if allies == 4 {
-		var north = findCountToFront(myID, gameMap, loc, hlt.NORTH)
-		var east = findCountToFront(myID, gameMap, loc, hlt.EAST)
-		var south = findCountToFront(myID, gameMap, loc, hlt.SOUTH)
-		var west = findCountToFront(myID, gameMap, loc, hlt.WEST)
-
-		if north <= east && north <= west && north <= east {
-			return hlt.Move {
-				Location: loc,
-				Direction: hlt.NORTH,
+		var best = 100000
+		var dir = hlt.STILL
+		for _,d := range hlt.CARDINALS {
+			var dist = findCountToFront(myID, gameMap, loc, d)
+			if dist < best {
+				best = dist
+				dir = d
 			}
 		}
-
-		if east <= west && east <= south {
-			return hlt.Move {
-				Location: loc,
-				Direction: hlt.EAST,
-			}
-		}
-
-		if south <= west {
-			return hlt.Move {
-				Location: loc,
-				Direction: hlt.SOUTH,
-			}
-		}
-
 		return hlt.Move {
 			Location: loc,
-			Direction: hlt.WEST,
+			Direction: dir,
 		}
 	}
 
