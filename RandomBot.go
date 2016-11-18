@@ -6,8 +6,9 @@ import (
 	"math/rand"
 )
 
+
 func main () {
-	conn, gameMap := hlt.NewConnection("bovard")
+	conn, gameMap := hlt.NewConnection("RandomBot")
 	for {
 		var moves hlt.MoveSet
 		gameMap = conn.GetFrame()
