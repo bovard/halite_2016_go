@@ -1,0 +1,6 @@
+sub*
+*.DS_Store
+.idea*
+*.log
+*.hlt
+halite
