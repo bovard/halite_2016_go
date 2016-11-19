@@ -49,7 +49,7 @@ func canNeighborCaptureWithOurHelp(myID int, gameMap hlt.GameMap, loc hlt.Locati
 func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 	var site = gameMap.GetSite(loc, hlt.STILL)
 	var allies = 0
-	var value = 999999.0
+	var value = 999999999.0
 	var dir = hlt.STILL
 	for _,d := range hlt.CARDINALS {
 		var new_site = gameMap.GetSite(loc, d)
@@ -69,6 +69,18 @@ func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 		return hlt.Move {
 			Location: loc,
 			Direction: dir,
+		}
+	}
+
+	// fix for null times and 255 walls
+	if allies < 4 && site.Strength == 255 {
+		for _,d := range hlt.CARDINALS {
+			if new_site.Owner != myID && new_site.Strength <= site.Strength {
+				return hlt.Move {
+					Location: loc,
+					Direction: d,
+				}
+			}
 		}
 	}
 
