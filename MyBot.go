@@ -49,7 +49,7 @@ func canNeighborCaptureWithOurHelp(myID int, gameMap hlt.GameMap, loc hlt.Locati
 func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 	var site = gameMap.GetSite(loc, hlt.STILL)
 	var allies = 0
-	var value = 999.0
+	var value = 999999.0
 	var dir = hlt.STILL
 	for _,d := range hlt.CARDINALS {
 		var new_site = gameMap.GetSite(loc, d)
