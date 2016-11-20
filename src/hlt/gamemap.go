@@ -3,6 +3,7 @@ package hlt
 import (
 	"log"
 	"math"
+	"os"
 	"strconv"
 )
 
@@ -24,6 +25,8 @@ func NewGameMap(width, height int) GameMap {
 		}
 	}
 
+	
+
 	return gameMap
 }
 
@@ -40,6 +43,23 @@ func (m *GameMap) InBounds(loc Location) bool {
 	return loc.X >= 0 && loc.X < m.Width && loc.Y >= 0 && loc.Y < m.Height
 }
 
+func (m *GameMap) LogMessage(text string) {
+	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+	    panic(err)
+	}
+
+	if _, err = f.WriteString(text); err != nil {
+	    panic(err)
+	}
+	if _, err = f.WriteString("\n"); err != nil {
+	    panic(err)
+	}
+	f.Close()
+	f.Close()
+}
+
+
 func (m *GameMap) GetDistance(loc1, loc2 Location) int {
 	dx := int(math.Abs(float64(loc1.X) - float64(loc2.X)))
 	dy := int(math.Abs(float64(loc1.Y) - float64(loc2.Y)))
@@ -50,6 +70,18 @@ func (m *GameMap) GetDistance(loc1, loc2 Location) int {
 		dy = m.Height - dy
 	}
 	return dx - dy
+}
+
+func (m *GameMap) GetManDistance(loc1, loc2 Location) int {
+	dx := int(math.Abs(float64(loc1.X) - float64(loc2.X)))
+	dy := int(math.Abs(float64(loc1.Y) - float64(loc2.Y)))
+	if dx > m.Width/2 {
+		dx = m.Width - dx
+	}
+	if dy > m.Width/2 {
+		dy = m.Height - dy
+	}
+	return dx + dy
 }
 
 func (m *GameMap) GetAngle(loc1, loc2 Location) float64 {
@@ -69,6 +101,39 @@ func (m *GameMap) GetAngle(loc1, loc2 Location) float64 {
 
 	return math.Atan2(float64(dy), float64(dx))
 
+}
+
+func (m *GameMap) GetDirectionTo(loc1, loc2 Location) (Direction, Direction) {
+	dx := loc1.X - loc2.X
+	dy := loc1.Y - loc2.Y
+	if dx > m.Width/2 {
+		dx = m.Width - dx
+	}
+	if dx < m.Width/2 {
+		dx = m.Width + dx
+	}
+	if dy > m.Width/2 {
+		dy = m.Height - dy
+	}
+	if dy < m.Width/2 {
+		dy = m.Height + dy
+	}
+	ns := NORTH
+	ew := EAST
+	if dy < 0 {
+		ns = SOUTH
+	} else if dy == 0 {
+		ns = STILL
+	}
+	if dx < 0 {
+		ew = WEST
+	} else if dx == 0 {
+		ew = STILL
+	}
+	if math.Abs(float64(dx)) > math.Abs(float64(dy)) {
+		return ew, ns
+	}
+	return ns, ew
 }
 
 func (m *GameMap) GetLocation(loc Location, direction Direction) Location {
