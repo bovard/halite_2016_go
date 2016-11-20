@@ -2,7 +2,7 @@ package main
 
 import (
 	"hlt"
-	"strconv"
+	//"strconv"
 )
 
 func findCountToFront(myID int, gameMap hlt.GameMap, loc hlt.Location, d hlt.Direction) int {
