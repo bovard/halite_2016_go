@@ -136,14 +136,25 @@ func main() {
 	conn, gameMap := hlt.NewConnection("bovard")
 	for {
 		var moves hlt.MoveSet
+		strength := [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		production := [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		territory := [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		var allies []hlt.Location
 		gameMap = conn.GetFrame()
 		for y := 0; y < gameMap.Height; y++ {
 			for x := 0; x < gameMap.Width; x++ {
 				loc := hlt.NewLocation(x, y)
-				if gameMap.GetSite(loc, hlt.STILL).Owner == conn.PlayerTag {
-					moves = append(moves, move(conn.PlayerTag, gameMap, loc))
+				site := gameMap.GetSite(loc, hlt.STILL)
+				strength[site.Owner] += site.Strength
+				production[site.Owner] += site.Production
+				territory[site.Owner] += 1
+				if site.Owner == conn.PlayerTag {
+					allies = append(allies, loc)
 				}
 			}
+		}
+		for _, loc := range allies {
+			moves = append(moves, move(conn.PlayerTag, gameMap, loc))
 		}
 		conn.SendFrame(moves)
 
