@@ -192,11 +192,9 @@ func moveOrReserveToCaptureLoc(gameMap hlt.GameMap, loc hlt.Location, myID int, 
 	var distances [10000]int
 	var strengths [10]int
 	var productions [10]int
-	gameMap.LogMessage("getting distances")
 	for i, al := range allies {
 		dist := gameMap.GetManDistance(al, loc)
 		distances[i] = dist
-		gameMap.LogMessage(strconv.Itoa(dist))
 		if dist < 10 {
 			site := gameMap.GetSite(al, hlt.STILL)
 			strengths[dist] += site.Strength
@@ -214,8 +212,8 @@ func moveOrReserveToCaptureLoc(gameMap hlt.GameMap, loc hlt.Location, myID int, 
 			break
 		}
 	}
-	gameMap.LogMessage("we need ")
-	gameMap.LogMessage(strconv.Itoa(needed))
+	//gameMap.LogMessage("we need ")
+	//gameMap.LogMessage(strconv.Itoa(needed))
 	var toRemove []hlt.Location
 	var moves hlt.MoveSet
 	for i := 1; i <= needed; i++ {
@@ -290,7 +288,7 @@ func main() {
 	conn, gameMap := hlt.NewConnection("bovard")
 	//for turn := 0; turn < 30; turn++ {
 	for {
-		gameMap.LogMessage("NEW TURN")
+		//gameMap.LogMessage("NEW TURN")
 		//gameMap.LogMessage(strconv.Itoa(turn))
 		var moves hlt.MoveSet
 		strength := [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
