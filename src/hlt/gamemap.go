@@ -44,6 +44,9 @@ func (m *GameMap) InBounds(loc Location) bool {
 }
 
 func (m *GameMap) LogMessage(text string) {
+	if true {
+		return 
+	}
 	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 	    panic(err)
@@ -55,7 +58,6 @@ func (m *GameMap) LogMessage(text string) {
 	if _, err = f.WriteString("\n"); err != nil {
 	    panic(err)
 	}
-	f.Close()
 	f.Close()
 }
 

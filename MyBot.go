@@ -2,8 +2,10 @@ package main
 
 import (
 	"hlt"
-	//"strconv"
+	"strconv"
 )
+
+const NEUTRAL = 0
 
 func findCountToFront(myID int, gameMap hlt.GameMap, loc hlt.Location, d hlt.Direction) int {
 	var maxNum = gameMap.Height
@@ -53,23 +55,87 @@ func siteValue(site hlt.Site) float64 {
 	}
 }
 
-func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
-	var site = gameMap.GetSite(loc, hlt.STILL)
-	var allies = 0
-	var value = 999999999.0
-	var dir = hlt.STILL
+func nearEnemey(myID int, gameMap hlt.GameMap, loc hlt.Location) bool {
+	var sites []hlt.Site
 	for _, d := range hlt.CARDINALS {
-		var new_site = gameMap.GetSite(loc, d)
-		if new_site.Owner != myID && new_site.Strength < site.Strength {
-			v := siteValue(new_site)
+		l := gameMap.GetLocation(loc, d)
+		sites = append(sites, gameMap.GetSite(loc, d))
+		sites = append(sites, gameMap.GetSite(l, d))
+		if d == hlt.NORTH || d == hlt.SOUTH {
+			l := gameMap.GetLocation(loc, d)
+			sites = append(sites, gameMap.GetSite(l, hlt.RotateDirectionLeft(d)))
+			sites = append(sites, gameMap.GetSite(l, hlt.RotateDirectionRight(d)))
+		}
+	}
+	for _, s := range sites {
+		if s.Owner != NEUTRAL && s.Owner != myID {
+			return true
+		}
+	}
+	return false
+}
+
+func damageToEnemyFromMove(myID int, gameMap hlt.GameMap, loc hlt.Location, dir hlt.Direction) (int, int, int) {
+	l := gameMap.GetLocation(loc, dir)
+	straight := gameMap.GetSite(l, dir)
+	left := gameMap.GetSite(l, hlt.RotateDirectionLeft(dir))
+	right := gameMap.GetSite(l, hlt.RotateDirectionRight(dir))
+	lDamage := 0
+	sDamage := 0
+	rDamage := 0
+	if straight.Owner != NEUTRAL && straight.Owner != myID {
+		sDamage = straight.Strength
+	}
+	if left.Owner != NEUTRAL && left.Owner != myID {
+		lDamage = left.Strength
+	}
+	if right.Owner != NEUTRAL && right.Owner != myID {
+		rDamage = right.Strength
+	}
+	return sDamage, lDamage, rDamage
+}
+
+func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
+	site := gameMap.GetSite(loc, hlt.STILL)
+	allies := 0
+	enemies := 0
+	value := 999999999.0
+	dir := hlt.STILL
+	for _, d := range hlt.CARDINALS {
+		s := gameMap.GetSite(loc, d)
+		if s.Owner != myID && s.Strength < site.Strength {
+			v := siteValue(s)
 			if v < value {
 				value = v
 				dir = d
 			}
 		}
-		if new_site.Owner == myID {
+		if s.Owner == myID {
 			allies += 1
+		} else if s.Owner != NEUTRAL {
+			enemies += 1
 		}
+	}
+
+	if nearEnemey(myID, gameMap, loc) {
+		maxDmg := 0
+		dir := hlt.STILL
+		for _, d := range hlt.CARDINALS {
+			s, l, r := damageToEnemyFromMove(myID, gameMap, loc, d)
+			dmg := s + l + r
+			if dmg > maxDmg {
+				maxDmg = dmg
+				dir = d
+			}
+		}
+
+		if maxDmg > 0 {
+			return hlt.Move{
+				Location:  loc,
+				Direction: dir,
+			}
+		}
+
 	}
 
 	if dir != hlt.STILL {
@@ -82,8 +148,8 @@ func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 	// fix for null times and 255 walls
 	if allies < 4 && site.Strength == 255 {
 		for _, d := range hlt.CARDINALS {
-			var new_site = gameMap.GetSite(loc, d)
-			if new_site.Owner != myID && new_site.Strength <= site.Strength {
+			s := gameMap.GetSite(loc, d)
+			if s.Owner != myID && s.Strength == site.Strength {
 				return hlt.Move{
 					Location:  loc,
 					Direction: d,
@@ -286,7 +352,7 @@ func moveOrReserveToCaptureLoc(gameMap hlt.GameMap, loc hlt.Location, myID int, 
 
 func main() {
 	conn, gameMap := hlt.NewConnection("bovard")
-	//for turn := 0; turn < 30; turn++ {
+	//for turn := 0; turn < 5; turn++ {
 	for {
 		//gameMap.LogMessage("NEW TURN")
 		//gameMap.LogMessage(strconv.Itoa(turn))
@@ -311,6 +377,9 @@ func main() {
 				}
 
 			}
+		}
+		for _, s := range strength {
+			gameMap.LogMessage(strconv.Itoa(s))
 		}
 		if false {
 			// find the best spot to capture

@@ -12,6 +12,45 @@ import (
 
 type Direction int
 
+func RotateDirectionLeft(d Direction) Direction {
+	if d == NORTH {
+		return WEST
+	} else if d == WEST {
+		return SOUTH
+	} else if d == SOUTH {
+		return EAST
+	} else if d == EAST {
+		return NORTH
+	} 
+	return STILL
+}
+
+func RotateDirectionRight(d Direction) Direction {
+	if d == NORTH {
+		return EAST
+	} else if d == EAST {
+		return SOUTH
+	} else if d == SOUTH {
+		return WEST
+	} else if d == WEST {
+		return NORTH
+	} 
+	return STILL
+}
+
+func OppositeDirection(d Direction) Direction {
+	if d == NORTH {
+		return SOUTH
+	} else if d == EAST {
+		return WEST
+	} else if d == SOUTH {
+		return NORTH
+	} else if d == WEST {
+		return EAST
+	} 
+	return STILL
+}
+
 const (
 	STILL Direction = iota
 	NORTH
