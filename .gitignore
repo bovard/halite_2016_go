@@ -4,3 +4,4 @@ sub*
 *.log
 *.hlt
 halite
+log.txt
