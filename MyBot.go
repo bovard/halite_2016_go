@@ -158,15 +158,18 @@ func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 		}
 	}
 
-	if site.Strength < site.Production*5 {
-		return hlt.Move{
-			Location:  loc,
-			Direction: hlt.STILL,
+	distToClosestFront := 100000
+	dirToClosestFont := hlt.STILL
+	for _, d := range hlt.CARDINALS {
+		var dist = findCountToFront(myID, gameMap, loc, d)
+		if dist < distToClosestFront {
+			distToClosestFront = dist
+			dirToClosestFont = d
 		}
 	}
 
 	// see if we can help any of our allies capture by moving to their square
-	if allies != 4 {
+	if distToClosestFront <= 1 {
 		theirBest := 9999.0
 		toThem := hlt.STILL
 		for _, d := range hlt.CARDINALS {
@@ -226,20 +229,18 @@ func move(myID int, gameMap hlt.GameMap, loc hlt.Location) hlt.Move {
 
 	}
 
-	// if we are surrounded by allies, move toward the nearest front
-	if allies == 4 {
-		var best = 100000
-		var dir = hlt.STILL
-		for _, d := range hlt.CARDINALS {
-			var dist = findCountToFront(myID, gameMap, loc, d)
-			if dist < best {
-				best = dist
-				dir = d
-			}
-		}
+	if site.Strength < site.Production*5 {
 		return hlt.Move{
 			Location:  loc,
-			Direction: dir,
+			Direction: hlt.STILL,
+		}
+	}
+
+	// if we are surrounded by allies, move toward the nearest front
+	if distToClosestFront >= 2 {
+		return hlt.Move{
+			Location:  loc,
+			Direction: dirToClosestFont,
 		}
 	}
 
