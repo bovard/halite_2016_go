@@ -2,7 +2,6 @@ package main
 
 import (
 	"hlt"
-	"strconv"
 )
 
 const NEUTRAL = 0
@@ -379,29 +378,33 @@ func main() {
 
 			}
 		}
-		for _, s := range strength {
-			gameMap.LogMessage(strconv.Itoa(s))
-		}
-		if false {
-			// find the best spot to capture
-			best := 10000.0
-			toCapture := adjacent[0]
-			for _, loc := range adjacent {
-				site := gameMap.GetSite(loc, hlt.STILL)
-				if siteValue(site) < best {
-					best = siteValue(site)
-					toCapture = loc
-				}
-			}
 
-			allies, moves = moveOrReserveToCaptureLoc(gameMap, toCapture, conn.PlayerTag, allies)
-		}
-
-		// everyone else move using dumb strategy
 		for _, loc := range allies {
 			moves = append(moves, move(conn.PlayerTag, gameMap, loc))
 		}
-		conn.SendFrame(moves)
+
+		var smarterMoves hlt.MoveSet;
+		var result [50][50]int
+		for _, m :=  range moves {
+			if m.Direction == hlt.STILL {
+				result[m.Location.Y][m.Location.X] += gameMap.GetSite(m.Location, hlt.STILL).Strength
+				smarterMoves = append(smarterMoves, m)
+			}
+		}
+		for _, m := range moves {
+			if m.Direction != hlt.STILL {
+				str := gameMap.GetSite(m.Location, hlt.STILL).Strength
+				dest := gameMap.GetLocation(m.Location, m.Direction)
+				if result[dest.Y][dest.X] + str > 300 {
+					result[m.Location.Y][m.Location.X] += str
+					smarterMoves = append(smarterMoves, hlt.Move{m.Location, hlt.STILL})
+				} else {
+					result[dest.Y][dest.X] += str
+					smarterMoves = append(smarterMoves, m)
+				}
+			}
+		}
+		conn.SendFrame(smarterMoves)
 
 	}
 }
